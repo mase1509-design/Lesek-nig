@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lesekönig</title>
+
+  <!-- Inline SVG icon as data URI for homescreen/bookmark usage -->
+  <!-- Simple crown + book logo (keeps small file size and crisp on mobile) -->
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='100%' height='100%' rx='12' fill='%23142A2B'/><path d='M12 44h40v6a6 6 0 0 1-6 6H18a6 6 0 0 1-6-6v-6z' fill='%23FFD166'/><path d='M18 44V20l7 6 6-12 6 12 7-6v24' fill='%23000' opacity='0.06'/><path d='M18 20l7 6 6-12 6 12 7-6' stroke='%23FFF' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/><path d='M20 24c3 2 6 2 10 0 3 2 6 2 10 0' stroke='%231B2B2C' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round' /></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='100%' height='100%' rx='24' fill='%23142A2B'/><g transform='scale(1.6) translate(6,8)'><path d='M12 44h40v6a6 6 0 0 1-6 6H18a6 6 0 0 1-6-6v-6z' fill='%23FFD166'/><path d='M18 20l7 6 6-12 6 12 7-6' stroke='%23FFF' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/></g></svg>">
+
+  <meta name="theme-color" content="#142A2B">
+
+  <style>
+    :root{
+      --bg:#f7fbfb; --card:#ffffff; --muted:#6b7171; --accent:#142A2B; --green:#2ea44f; --red:#e55353; --glass: rgba(255,255,255,0.6);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#f7fbfb 0%, #eaf4f3 100%);color:var(--accent)}
+    .app{max-width:900px;margin:18px auto;padding:18px;}
+    header{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));box-shadow:0 6px 18px rgba(20,42,43,0.08)}
+    .logo{width:56px;height:56px;flex:0 0 56px;border-radius:12px;background:linear-gradient(180deg,#173033,#0f2425);display:flex;align-items:center;justify-content:center;color:white}
+    .logo svg{width:36px;height:36px}
+    h1{font-size:1.25rem;margin:0}
+    .tagline{font-size:0.85rem;color:var(--muted)}
+
+    .card{margin-top:16px;background:var(--card);padding:14px;border-radius:14px;box-shadow:0 6px 14px rgba(12,30,30,0.06)}
+
+    .form-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    label{font-size:0.85rem;color:var(--muted)}
+    input[type=date], input[type=number], button, select{padding:10px 12px;border-radius:10px;border:1px solid rgba(20,42,43,0.08);background:transparent;font-size:1rem}
+    input[type=number]{width:120px}
+    .btn-primary{background:linear-gradient(180deg,var(--accent), #0f2324);color:#fff;border:none;box-shadow:0 6px 12px rgba(20,42,43,0.12)}
+    .btn-ghost{background:transparent;border:1px solid rgba(20,42,43,0.06)}
+
+    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:12px}
+    .weekday{font-weight:600;text-align:center;color:var(--muted);font-size:0.8rem}
+    .day{min-height:64px;padding:8px;border-radius:10px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 -6px 0 rgba(0,0,0,0.01)}
+    .day .date-num{font-weight:700}
+    .day .minutes{font-size:0.85rem;color:var(--muted)}
+
+    .day.empty{background:transparent}
+    .day.red{background:linear-gradient(180deg, rgba(229,83,83,0.12), rgba(229,83,83,0.06))}
+    .day.green{background:linear-gradient(180deg, rgba(46,164,79,0.12), rgba(46,164,79,0.06))}
+
+    .nav-month{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .month-title{font-weight:700}
+
+    .summary{margin-top:12px;padding:12px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));display:flex;justify-content:space-between;align-items:center}
+    .summary strong{font-size:1.25rem}
+
+    @media (max-width:520px){.logo{width:48px;height:48px}.app{padding:12px} .day{min-height:56px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo" aria-hidden>
+        <!-- Inline logo SVG - also used visually on the page -->
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lesekönig Logo">
+          <rect width="100%" height="100%" rx="10" fill="#142A2B"/>
+          <path d="M12 44h40v6a6 6 0 0 1-6 6H18a6 6 0 0 1-6-6v-6z" fill="#FFD166"/>
+          <path d="M18 20l7 6 6-12 6 12 7-6" stroke="#FFF" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Lesekönig</h1>
+        <div class="tagline">Dein tägliches Lesetracking — Minuten zählen, Gewohnheit bauen.</div>
+      </div>
+    </header>
+
+    <!-- Eingabemaske -->
+    <div class="card" id="entryCard">
+      <form id="entryForm" onsubmit="return false;">
+        <div class="form-row">
+          <div style="min-width:170px">
+            <label for="dateInput">Datum</label><br>
+            <input type="date" id="dateInput" required />
+          </div>
+          <div>
+            <label for="minutesInput">Leseminuten</label><br>
+            <input type="number" id="minutesInput" min="0" step="5" value="10" />
+          </div>
+          <div style="display:flex;gap:8px;align-items:end;margin-left:auto">
+            <button class="btn-primary" id="saveBtn">Eintragen</button>
+            <button class="btn-ghost" id="clearBtn" type="button">Löschen</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Monatsübersicht -->
+    <div class="card" style="margin-top:14px">
+      <div class="nav-month">
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="prevMonth" class="btn-ghost" aria-label="Vorheriger Monat">◀</button>
+          <button id="todayBtn" class="btn-ghost">Heute</button>
+          <button id="nextMonth" class="btn-ghost" aria-label="Nächster Monat">▶</button>
+        </div>
+        <div class="month-title" id="monthTitle">Monat</div>
+      </div>
+
+      <div style="margin-top:12px;display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+        <div class="weekday">Mo</div><div class="weekday">Di</div><div class="weekday">Mi</div><div class="weekday">Do</div><div class="weekday">Fr</div><div class="weekday">Sa</div><div class="weekday">So</div>
+      </div>
+
+      <div id="calendar" class="calendar" aria-live="polite"></div>
+
+      <div class="summary">
+        <div>Gesamte Minuten im Monat</div>
+        <div><strong id="monthTotal">0</strong> min</div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;color:var(--muted);font-size:0.9rem">Tipp: Füge diese Seite zu Deinem Homescreen hinzu (Browser-Menü → Zum Startbildschirm). Das Icon wird verwendet.</div>
+
+  </div>
+
+  <script>
+    // ===== Storage handling =====
+    const STORAGE_KEY = 'lesekoenig-data-v1';
+    function loadData(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      }catch(e){console.error(e); return {}};
+    }
+    function saveData(obj){ localStorage.setItem(STORAGE_KEY, JSON.stringify(obj)); }
+
+    const data = loadData(); // { 'YYYY-MM-DD': minutes }
+
+    // ===== Utilities =====
+    function toDateKey(d){ // d: Date or string
+      if(typeof d === 'string') return d;
+      const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,'0'); const day = String(d.getDate()).padStart(2,'0');
+      return `${y}-${m}-${day}`;
+    }
+    function parseDateInput(s){ return new Date(s + 'T00:00:00'); }
+
+    // ===== UI Elements =====
+    const dateInput = document.getElementById('dateInput');
+    const minutesInput = document.getElementById('minutesInput');
+    const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const calendarEl = document.getElementById('calendar');
+    const monthTitle = document.getElementById('monthTitle');
+    const monthTotalEl = document.getElementById('monthTotal');
+
+    // Current month being viewed
+    let viewYear, viewMonth; // month: 0-11
+
+    // Init date input with today
+    function setTodayOnInputs(){ const today = new Date(); dateInput.value = toDateKey(today); minutesInput.value = 10; }
+    setTodayOnInputs();
+
+    // Set view to current month
+    function setViewToDate(d){ viewYear = d.getFullYear(); viewMonth = d.getMonth(); renderCalendar(); }
+    setViewToDate(new Date());
+
+    // ===== Save & Clear =====
+    saveBtn.addEventListener('click', ()=>{
+      const dateKey = dateInput.value;
+      if(!dateKey) return alert('Bitte Datum auswählen.');
+      let minutes = parseInt(minutesInput.value) || 0;
+      minutes = Math.max(0, Math.round(minutes/5)*5);
+      data[dateKey] = minutes;
+      saveData(data);
+      // if saved date is in viewed month -> re-render
+      const d = parseDateInput(dateKey);
+      if(d.getFullYear()===viewYear && d.getMonth()===viewMonth) renderCalendar();
+      // user feedback
+      saveBtn.textContent = 'Gespeichert ✓';
+      setTimeout(()=> saveBtn.textContent = 'Eintragen', 900);
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      const dateKey = dateInput.value;
+      if(!dateKey) return alert('Bitte Datum auswählen.');
+      if(data[dateKey]!==undefined){ delete data[dateKey]; saveData(data); }
+      const d = parseDateInput(dateKey);
+      if(d.getFullYear()===viewYear && d.getMonth()===viewMonth) renderCalendar();
+      clearBtn.textContent = 'Gelöscht';
+      setTimeout(()=> clearBtn.textContent = 'Löschen', 900);
+    });
+
+    // ===== Calendar rendering =====
+    function renderCalendar(){
+      calendarEl.innerHTML = '';
+      const first = new Date(viewYear, viewMonth, 1);
+      const last = new Date(viewYear, viewMonth+1, 0);
+      const daysInMonth = last.getDate();
+
+      // Month title
+      const opts = { year: 'numeric', month: 'long' };
+      monthTitle.textContent = new Intl.DateTimeFormat('de-DE', opts).format(first);
+
+      // Determine weekday index for first day (we want Monday = 0)
+      let startWeekday = first.getDay(); // 0 (Sun) - 6 (Sat)
+      // convert so Monday=0..Sunday=6
+      startWeekday = (startWeekday + 6) % 7;
+
+      // Fill initial empty days
+      for(let i=0;i<startWeekday;i++){
+        const empty = document.createElement('div'); empty.className = 'day empty'; calendarEl.appendChild(empty);
+      }
+
+      let monthTotal = 0;
+      for(let d=1; d<=daysInMonth; d++){
+        const dayDate = new Date(viewYear, viewMonth, d);
+        const key = toDateKey(dayDate);
+        const minutes = data[key] ?? 0;
+        monthTotal += minutes;
+
+        const dayEl = document.createElement('div');
+        dayEl.className = 'day ' + (minutes>10 ? 'green' : 'red');
+        dayEl.tabIndex = 0;
+        dayEl.setAttribute('role', 'button');
+        dayEl.setAttribute('aria-label', `${d}. ${viewMonth+1}. ${viewYear}: ${minutes} Minuten`);
+
+        const top = document.createElement('div');
+        top.className = 'date-num'; top.textContent = d;
+        const bottom = document.createElement('div');
+        bottom.className = 'minutes'; bottom.textContent = minutes ? minutes + ' min' : '-';
+
+        dayEl.appendChild(top); dayEl.appendChild(bottom);
+
+        // Click to edit that day's entry in the form
+        dayEl.addEventListener('click', ()=>{
+          dateInput.value = key;
+          minutesInput.value = minutes || 10;
+          // on mobile, focus minutes input
+          minutesInput.focus();
+        });
+
+        calendarEl.appendChild(dayEl);
+      }
+
+      monthTotalEl.textContent = monthTotal;
+    }
+
+    // Navigation
+    document.getElementById('prevMonth').addEventListener('click', ()=>{ viewMonth--; if(viewMonth<0){viewMonth=11; viewYear--;} renderCalendar(); });
+    document.getElementById('nextMonth').addEventListener('click', ()=>{ viewMonth++; if(viewMonth>11){viewMonth=0; viewYear++;} renderCalendar(); });
+    document.getElementById('todayBtn').addEventListener('click', ()=>{ const t=new Date(); setViewToDate(t); dateInput.value = toDateKey(t); });
+
+    // When page loads, render calendar
+    renderCalendar();
+
+    // Helpful: when user changes date in dateInput, update minutesInput to saved value if present
+    dateInput.addEventListener('change', ()=>{
+      const k = dateInput.value; if(!k) return; minutesInput.value = data[k] ?? 10;
+    });
+
+    // Keyboard support: Enter in minutesInput submits
+    minutesInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ saveBtn.click(); } });
+
+    // Accessibility: allow arrow keys to navigate months when focused on calendar
+    calendarEl.addEventListener('keydown', (e)=>{
+      if(e.key==='ArrowLeft') document.getElementById('prevMonth').click();
+      if(e.key==='ArrowRight') document.getElementById('nextMonth').click();
+    });
+
+    // Fallback: ensure localStorage available
+    try{ localStorage.setItem('__ls_test','1'); localStorage.removeItem('__ls_test'); }catch(e){ alert('Warnung: localStorage scheint nicht verfügbar zu sein. Speicherung lokal funktioniert nicht.'); }
+
+    // Nice-to-have: prompt quick-add today when opening first time
+    if(!Object.keys(data).length){ /* first run - prefill nothing */ }
+
+  </script>
+</body>
+</html>
