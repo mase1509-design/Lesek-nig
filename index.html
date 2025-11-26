@@ -81,7 +81,7 @@
           </div>
           <div>
             <label for="minutesInput">Leseminuten</label><br>
-            <input type="number" id="minutesInput" min="0" step="5" value="10" />
+            <select id="minutesInput">${[...Array(25)].map((_,i)=>`<option value="${i*5}">${i*5} min</option>`).join('')}</select>
           </div>
           <div style="display:flex;gap:8px;align-items:end;margin-left:auto">
             <button class="btn-primary" id="saveBtn">Eintragen</button>
@@ -214,7 +214,7 @@
         monthTotal += minutes;
 
         const dayEl = document.createElement('div');
-        dayEl.className = 'day ' + (minutes>10 ? 'green' : 'red');
+        dayEl.className = 'day ' + (minutes>=10 ? 'green' : 'red');
         dayEl.tabIndex = 0;
         dayEl.setAttribute('role', 'button');
         dayEl.setAttribute('aria-label', `${d}. ${viewMonth+1}. ${viewYear}: ${minutes} Minuten`);
